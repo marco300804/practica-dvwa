@@ -7,7 +7,7 @@ if( isset( $_REQUEST[ 'Submit' ] ) ) {
     if ($_DVWA['SQLI_DB'] == MYSQL) {
         // Check database usando sentencias preparadas (seguro)
         $stmt = $GLOBALS["___mysqli_ston"]->prepare("SELECT first_name, last_name FROM users WHERE user_id = ?");
-        $stmt->bind_param("s", $id); 
+        $stmt->bind_param("s", $id);
         $stmt->execute();
         $result = $stmt->get_result();
 
