@@ -77,77 +77,79 @@ class LoginController
     }
 
     # This is an attempt at an OAUTH2 client password authentication flow
+    # LA FUNCION LOGIN HA SIDO REFACTORIZADA PARA REDUCIR LA COMPLEJIDAD COGNITIVA
     private function login() {
-        # Default fail, just in case.
-        $response['status_code_header'] = self::HTTP_401;
-        $response['body'] = json_encode (array ("status" => "Authentication failed"));
-
-        if (array_key_exists ("PHP_AUTH_USER", $_SERVER) && 
-            array_key_exists ("PHP_AUTH_PW", $_SERVER)) {
-            $client_id = $_SERVER['PHP_AUTH_USER'];
-            $client_secret = $_SERVER['PHP_AUTH_PW'];
-
-            # App auth check
-            if ($client_id == "1471.dvwa.digi.ninja" && $client_secret == "ABigLongSecret") {
-
-                if (array_key_exists ("grant_type", $_POST)) {
-                    switch ($_POST['grant_type']) {
-                        case "password":
-                            if (array_key_exists ("username", $_POST) && 
-                                array_key_exists ("password", $_POST)) {
-                                $username = $_POST['username'];
-                                $password = $_POST['password'];
-
-                                if ($username == "mrbennett" && $password == "becareful") {
-                                    $response['status_code_header'] = self::HTTP_200;
-                                    $response['body'] = Login::create_token();
-                                } else {
-                                    $response['status_code_header'] = self::HTTP_401;
-                                    $response['body'] = json_encode (array ("status" => "Invalid user credentials"));
-                                }
-                            } else {
-                                $response['status_code_header'] = self::HTTP_401;
-                                $response['body'] = json_encode (array ("status" => "Missing user credentials"));
-                            }
-                            break;
-                        case "refresh_token":
-                            if (array_key_exists ("refresh_token", $_POST)) {
-                                $refresh_token = $_POST['refresh_token'];
-
-                                # Because this is sent in a POST body, any + characters
-                                # get replaced by a space when the URL decode happens. This
-                                # puts them back to plus characters.
-                                $ref = str_replace (" ", "+", $refresh_token);
-
-                                if (Login::check_refresh_token($ref)) {
-                                    $response['status_code_header'] = self::HTTP_200;
-                                    $response['body'] = Login::create_token();
-                                } else {
-                                    $response['status_code_header'] = self::HTTP_401;
-                                    $response['body'] = json_encode (array ("status" => "Invalid refresh token"));
-                                }
-                            } else {
-                                $response['status_code_header'] = self::HTTP_401;
-                                $response['body'] = json_encode (array ("status" => "Missing refresh token"));
-                            }
-                            break;
-                        default:
-                            $response['status_code_header'] = self::HTTP_401;
-                            $response['body'] = json_encode (array ("status" => "Unknown grant type"));
-                    }
-                } else {
-                    $response['status_code_header'] = self::HTTP_401;
-                    $response['body'] = json_encode (array ("status" => "Missing grant type"));
-                }
-            } else {
-                $response['status_code_header'] = self::HTTP_401;
-                $response['body'] = json_encode (array ("status" => "Invalid clientid/clientsecret credentials"));
-            }
-        } else {
+        if (!array_key_exists("PHP_AUTH_USER", $_SERVER) || !array_key_exists("PHP_AUTH_PW", $_SERVER)) {
             $response['status_code_header'] = self::HTTP_401;
-            $response['body'] = json_encode (array ("status" => "Missing clientid/clientsecret credentials"));
+            $response['body'] = json_encode(array("status" => "Missing clientid/clientsecret credentials"));
+            return $response;
         }
 
+        $client_id = $_SERVER['PHP_AUTH_USER'];
+        $client_secret = $_SERVER['PHP_AUTH_PW'];
+
+        # App auth check
+        if ($client_id != "1471.dvwa.digi.ninja" || $client_secret != "ABigLongSecret") {
+            $response['status_code_header'] = self::HTTP_401;
+            $response['body'] = json_encode(array("status" => "Invalid clientid/clientsecret credentials"));
+            return $response;
+        }
+
+        if (!array_key_exists("grant_type", $_POST)) {
+            $response['status_code_header'] = self::HTTP_401;
+            $response['body'] = json_encode(array("status" => "Missing grant type"));
+            return $response;
+        }
+
+        if ($_POST['grant_type'] === "password") {
+            return $this->handlePasswordGrant();
+        }
+
+        if ($_POST['grant_type'] === "refresh_token") {
+            return $this->handleRefreshTokenGrant();
+        }
+
+        $response['status_code_header'] = self::HTTP_401;
+        $response['body'] = json_encode(array("status" => "Unknown grant type"));
+        return $response;
+    }
+
+    private function handlePasswordGrant() {
+        if (!array_key_exists("username", $_POST) || !array_key_exists("password", $_POST)) {
+            $response['status_code_header'] = self::HTTP_401;
+            $response['body'] = json_encode(array("status" => "Missing user credentials"));
+            return $response;
+        }
+
+        if ($_POST['username'] == "mrbennett" && $_POST['password'] == "becareful") {
+            $response['status_code_header'] = self::HTTP_200;
+            $response['body'] = Login::create_token();
+            return $response;
+        }
+
+        $response['status_code_header'] = self::HTTP_401;
+        $response['body'] = json_encode(array("status" => "Invalid user credentials"));
+        return $response;
+    }
+
+    private function handleRefreshTokenGrant() {
+        if (!array_key_exists("refresh_token", $_POST)) {
+            $response['status_code_header'] = self::HTTP_401;
+            $response['body'] = json_encode(array("status" => "Missing refresh token"));
+            return $response;
+        }
+
+        $refresh_token = $_POST['refresh_token'];
+        $ref = str_replace(" ", "+", $refresh_token);
+
+        if (Login::check_refresh_token($ref)) {
+            $response['status_code_header'] = self::HTTP_200;
+            $response['body'] = Login::create_token();
+            return $response;
+        }
+
+        $response['status_code_header'] = self::HTTP_401;
+        $response['body'] = json_encode(array("status" => "Invalid refresh token"));
         return $response;
     }
 
