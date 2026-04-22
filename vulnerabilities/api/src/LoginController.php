@@ -6,8 +6,10 @@ use OpenApi\Attributes as OAT;
 
 class LoginController
 {
-    // Aquí definimos la constante para evitar repetir texto
+    // Aquí agrupamos todas nuestras constantes de clase limpias
     private const PHP_INPUT = 'php://input';
+    private const HTTP_200 = 'HTTP/1.1 200 OK';
+    private const HTTP_401 = 'HTTP/1.1 401 Unauthorized';
     
     private $command = null;
     private $requestMethod = "GET";
@@ -54,7 +56,6 @@ class LoginController
             return $ret;
         }
 
-        // Uso de la constante aquí
         $input = (array) json_decode(file_get_contents(self::PHP_INPUT), TRUE);
         if (array_key_exists ("username", $input) && 
             array_key_exists ("password", $input)) {
@@ -62,14 +63,14 @@ class LoginController
             $password = $input['password'];
 
             if ($username == "mrbennett" && $password == "becareful") {
-                $response['status_code_header'] = 'HTTP/1.1 200 OK';
+                $response['status_code_header'] = self::HTTP_200;
                 $response['body'] = json_encode (array ("token" => Login::create_token()));
             } else {
-                $response['status_code_header'] = 'HTTP/1.1 401 Unauthorized';
+                $response['status_code_header'] = self::HTTP_401;
                 $response['body'] = json_encode (array ("status" => "Invalid credentials"));
             }
         } else {
-            $response['status_code_header'] = 'HTTP/1.1 401 Unauthorized';
+            $response['status_code_header'] = self::HTTP_401;
             $response['body'] = json_encode (array ("status" => "Missing credentials"));
         }
         return $response;
@@ -78,7 +79,7 @@ class LoginController
     # This is an attempt at an OAUTH2 client password authentication flow
     private function login() {
         # Default fail, just in case.
-        $response['status_code_header'] = 'HTTP/1.1 401 Unauthorized';
+        $response['status_code_header'] = self::HTTP_401;
         $response['body'] = json_encode (array ("status" => "Authentication failed"));
 
         if (array_key_exists ("PHP_AUTH_USER", $_SERVER) && 
@@ -98,14 +99,14 @@ class LoginController
                                 $password = $_POST['password'];
 
                                 if ($username == "mrbennett" && $password == "becareful") {
-                                    $response['status_code_header'] = 'HTTP/1.1 200 OK';
+                                    $response['status_code_header'] = self::HTTP_200;
                                     $response['body'] = Login::create_token();
                                 } else {
-                                    $response['status_code_header'] = 'HTTP/1.1 401 Unauthorized';
+                                    $response['status_code_header'] = self::HTTP_401;
                                     $response['body'] = json_encode (array ("status" => "Invalid user credentials"));
                                 }
                             } else {
-                                $response['status_code_header'] = 'HTTP/1.1 401 Unauthorized';
+                                $response['status_code_header'] = self::HTTP_401;
                                 $response['body'] = json_encode (array ("status" => "Missing user credentials"));
                             }
                             break;
@@ -119,31 +120,31 @@ class LoginController
                                 $ref = str_replace (" ", "+", $refresh_token);
 
                                 if (Login::check_refresh_token($ref)) {
-                                    $response['status_code_header'] = 'HTTP/1.1 200 OK';
+                                    $response['status_code_header'] = self::HTTP_200;
                                     $response['body'] = Login::create_token();
                                 } else {
-                                    $response['status_code_header'] = 'HTTP/1.1 401 Unauthorized';
+                                    $response['status_code_header'] = self::HTTP_401;
                                     $response['body'] = json_encode (array ("status" => "Invalid refresh token"));
                                 }
                             } else {
-                                $response['status_code_header'] = 'HTTP/1.1 401 Unauthorized';
+                                $response['status_code_header'] = self::HTTP_401;
                                 $response['body'] = json_encode (array ("status" => "Missing refresh token"));
                             }
                             break;
                         default:
-                            $response['status_code_header'] = 'HTTP/1.1 401 Unauthorized';
+                            $response['status_code_header'] = self::HTTP_401;
                             $response['body'] = json_encode (array ("status" => "Unknown grant type"));
                     }
                 } else {
-                    $response['status_code_header'] = 'HTTP/1.1 401 Unauthorized';
+                    $response['status_code_header'] = self::HTTP_401;
                     $response['body'] = json_encode (array ("status" => "Missing grant type"));
                 }
             } else {
-                $response['status_code_header'] = 'HTTP/1.1 401 Unauthorized';
+                $response['status_code_header'] = self::HTTP_401;
                 $response['body'] = json_encode (array ("status" => "Invalid clientid/clientsecret credentials"));
             }
         } else {
-            $response['status_code_header'] = 'HTTP/1.1 401 Unauthorized';
+            $response['status_code_header'] = self::HTTP_401;
             $response['body'] = json_encode (array ("status" => "Missing clientid/clientsecret credentials"));
         }
 
@@ -160,24 +161,23 @@ class LoginController
             return $ret;
         }
 
-        // Uso de la constante aquí
         $input = (array) json_decode(file_get_contents(self::PHP_INPUT), TRUE);
         if (array_key_exists ("refresh_token", $input)) {
             if (array_key_exists ("grant_type", $input)) {
                 $token = $input['token'];
                 if (Login::check_access_token($token)) {
-                    $response['status_code_header'] = 'HTTP/1.1 200 OK';
+                    $response['status_code_header'] = self::HTTP_200;
                     $response['body'] = json_encode (array ("token" => "Valid"));
                 } else {
-                    $response['status_code_header'] = 'HTTP/1.1 401 Unauthorized';
+                    $response['status_code_header'] = self::HTTP_401;
                     $response['body'] = json_encode (array ("status" => "Invalid"));
                 }
             } else {
-                $response['status_code_header'] = 'HTTP/1.1 401 Unauthorized';
+                $response['status_code_header'] = self::HTTP_401;
                 $response['body'] = json_encode (array ("status" => "Missing token"));
             }
         } else {
-            $response['status_code_header'] = 'HTTP/1.1 401 Unauthorized';
+            $response['status_code_header'] = self::HTTP_401;
             $response['body'] = json_encode (array ("status" => "Missing token"));
         }
         return $response;
@@ -217,19 +217,18 @@ class LoginController
             return $ret;
         }
 
-        // Uso de la constante aquí
         $input = (array) json_decode(file_get_contents(self::PHP_INPUT), TRUE);
         if (array_key_exists ("token", $input)) {
             $token = $input['token'];
             if (Login::check_access_token($token)) {
-                $response['status_code_header'] = 'HTTP/1.1 200 OK';
+                $response['status_code_header'] = self::HTTP_200;
                 $response['body'] = json_encode (array ("token" => "Valid"));
             } else {
-                $response['status_code_header'] = 'HTTP/1.1 401 Unauthorized';
+                $response['status_code_header'] = self::HTTP_401;
                 $response['body'] = json_encode (array ("status" => "Invalid"));
             }
         } else {
-            $response['status_code_header'] = 'HTTP/1.1 401 Unauthorized';
+            $response['status_code_header'] = self::HTTP_401;
             $response['body'] = json_encode (array ("status" => "Missing token"));
         }
         return $response;
