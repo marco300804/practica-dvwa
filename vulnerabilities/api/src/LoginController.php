@@ -10,6 +10,7 @@ class LoginController
     private const PHP_INPUT = 'php://input';
     private const HTTP_200 = 'HTTP/1.1 200 OK';
     private const HTTP_401 = 'HTTP/1.1 401 Unauthorized';
+    private const MISSING_TOKEN = 'Missing token'; // <-- NUEVA CONSTANTE AÑADIDA
     
     private $command = null;
     private $requestMethod = "GET";
@@ -176,11 +177,11 @@ class LoginController
                 }
             } else {
                 $response['status_code_header'] = self::HTTP_401;
-                $response['body'] = json_encode (array ("status" => "Missing token"));
+                $response['body'] = json_encode (array ("status" => self::MISSING_TOKEN)); // <-- REEMPLAZADO AQUÍ
             }
         } else {
             $response['status_code_header'] = self::HTTP_401;
-            $response['body'] = json_encode (array ("status" => "Missing token"));
+            $response['body'] = json_encode (array ("status" => self::MISSING_TOKEN)); // <-- REEMPLAZADO AQUÍ
         }
         return $response;
     }
@@ -231,7 +232,7 @@ class LoginController
             }
         } else {
             $response['status_code_header'] = self::HTTP_401;
-            $response['body'] = json_encode (array ("status" => "Missing token"));
+            $response['body'] = json_encode (array ("status" => self::MISSING_TOKEN)); // <-- REEMPLAZADO AQUÍ
         }
         return $response;
     }
